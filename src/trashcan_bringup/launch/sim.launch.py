@@ -81,6 +81,9 @@ def generate_launch_description():
     )
 
     # gz_ros2_control starts the controller manager once the robot is spawned.
+    # Activation waits for the first simulation steps, which can take well
+    # over the default 5 s switch timeout on a slow machine while Gazebo is
+    # still starting its sensors. The service call must outlast the switch.
     def spawner(controller, *extra_args):
         return Node(
             package='controller_manager',
@@ -89,6 +92,8 @@ def generate_launch_description():
                 controller,
                 '--controller-manager', '/controller_manager',
                 '--controller-manager-timeout', '120',
+                '--switch-timeout', '60',
+                '--service-call-timeout', '90',
                 *extra_args,
             ],
             parameters=[{'use_sim_time': True}],
