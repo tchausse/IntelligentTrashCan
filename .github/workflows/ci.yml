@@ -10,6 +10,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  format:
+    name: C++ format (clang-format)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check clang-format
+        run: git ls-files -z '*.cpp' '*.hpp' '*.h' '*.cc' | xargs -0 clang-format --dry-run --Werror
+
   build-and-test:
     name: Build and test (ROS 2 Jazzy)
     runs-on: ubuntu-24.04

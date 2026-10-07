@@ -1,6 +1,5 @@
 // Copyright 2026 Thomas Chausse
-
-// Bin fill-level math, kept free of ROS so it can be unit tested directly.
+// SPDX-License-Identifier: MIT
 
 #ifndef TRASHCAN_SENSORS__FILL_LEVEL_HPP_
 #define TRASHCAN_SENSORS__FILL_LEVEL_HPP_
@@ -8,45 +7,33 @@
 #include <optional>
 #include <vector>
 
-namespace trashcan_sensors
-{
+namespace trashcan_sensors {
 
-// Ranges measured by the fill-level sensor at the two ends of the scale.
-struct FillLevelCalibration
-{
-  // Range to the bin floor when the bin is empty.
-  double empty_range;
-  // Range to the trash surface when the bin counts as 100 % full.
-  double full_range;
+struct FillLevelCalibration {
+  double empty_bin_range_m;
+  double full_bin_range_m;
 };
 
-// Throws std::invalid_argument unless 0 < full_range < empty_range.
-void validate(const FillLevelCalibration & calibration);
+void validate(const FillLevelCalibration& calibration);
 
-// Returns the closest reading of a range scan, which is the top of the trash
-// pile. Readings below range_min (including -inf) mean an object right in front
-// of the sensor and count as range_min. Readings with no return (+inf, NaN or
-// beyond range_max) are ignored. Returns nullopt when no reading is usable.
-std::optional<double> nearest_range(
-  const std::vector<float> & ranges, double range_min, double range_max);
+// The closest reading is the top of the trash pile. Readings below range_min,
+// including -inf, are an object right in front of the sensor rather than a
+// missing return, so they count as range_min instead of being dropped.
+std::optional<double> nearest_range_m(const std::vector<float>& ranges_m,
+                                      double range_min_m, double range_max_m);
 
-// Converts a range into a fill percentage, clamped to [0, 100].
-double fill_percent(double range, const FillLevelCalibration & calibration);
+double fill_percent(double range_m, const FillLevelCalibration& calibration);
 
-// Turns the fill percentage into a full / not full flag. Once full, the bin
-// stays full until the level drops below threshold - hysteresis, so that noise
-// around the threshold does not toggle the flag.
-class FullDetector
-{
-public:
-  // Throws std::invalid_argument unless 0 < threshold <= 100 and
-  // 0 <= hysteresis < threshold.
+// Once full, the bin stays full until the level drops hysteresis_percent below
+// the threshold, so sensor noise around the threshold does not toggle the flag.
+class FullDetector {
+ public:
   FullDetector(double threshold_percent, double hysteresis_percent);
 
-  bool update(double percent);
-  bool full() const {return full_;}
+  bool update(double fill_level_percent);
+  bool full() const { return full_; }
 
-private:
+ private:
   double threshold_percent_;
   double hysteresis_percent_;
   bool full_{false};

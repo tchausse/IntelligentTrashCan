@@ -1,4 +1,5 @@
 // Copyright 2026 Thomas Chausse
+// SPDX-License-Identifier: MIT
 
 #include "trashcan_sensors/fill_level.hpp"
 
@@ -6,44 +7,50 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace trashcan_sensors
-{
+namespace trashcan_sensors {
 
-void validate(const FillLevelCalibration & calibration)
-{
-  if (!(calibration.full_range > 0.0 && calibration.full_range < calibration.empty_range)) {
+namespace {
+
+constexpr double kMaxFillPercent = 100.0;
+
+}  // namespace
+
+void validate(const FillLevelCalibration& calibration) {
+  if (!(calibration.full_bin_range_m > 0.0 &&
+        calibration.full_bin_range_m < calibration.empty_bin_range_m)) {
     throw std::invalid_argument(
-            "fill level calibration needs 0 < full_range < empty_range");
+        "fill level calibration needs 0 < full_range_m < empty_range_m");
   }
 }
 
-std::optional<double> nearest_range(
-  const std::vector<float> & ranges, double range_min, double range_max)
-{
-  std::optional<double> nearest;
-  for (const float reading : ranges) {
-    if (std::isnan(reading) || reading > range_max) {
+std::optional<double> nearest_range_m(const std::vector<float>& ranges_m,
+                                      double range_min_m, double range_max_m) {
+  std::optional<double> nearest_m;
+  for (const float reading_m : ranges_m) {
+    const bool has_return = !std::isnan(reading_m) && reading_m <= range_max_m;
+    if (!has_return) {
       continue;
     }
-    const double range = std::max(static_cast<double>(reading), range_min);
-    if (!nearest || range < *nearest) {
-      nearest = range;
+    const double range_m =
+        std::max(static_cast<double>(reading_m), range_min_m);
+    if (!nearest_m || range_m < *nearest_m) {
+      nearest_m = range_m;
     }
   }
-  return nearest;
+  return nearest_m;
 }
 
-double fill_percent(double range, const FillLevelCalibration & calibration)
-{
-  const double fraction =
-    (calibration.empty_range - range) / (calibration.empty_range - calibration.full_range);
-  return 100.0 * std::clamp(fraction, 0.0, 1.0);
+double fill_percent(double range_m, const FillLevelCalibration& calibration) {
+  const double fill_fraction =
+      (calibration.empty_bin_range_m - range_m) /
+      (calibration.empty_bin_range_m - calibration.full_bin_range_m);
+  return kMaxFillPercent * std::clamp(fill_fraction, 0.0, 1.0);
 }
 
 FullDetector::FullDetector(double threshold_percent, double hysteresis_percent)
-: threshold_percent_(threshold_percent), hysteresis_percent_(hysteresis_percent)
-{
-  if (!(threshold_percent > 0.0 && threshold_percent <= 100.0)) {
+    : threshold_percent_(threshold_percent),
+      hysteresis_percent_(hysteresis_percent) {
+  if (!(threshold_percent > 0.0 && threshold_percent <= kMaxFillPercent)) {
     throw std::invalid_argument("full threshold must be in (0, 100]");
   }
   if (!(hysteresis_percent >= 0.0 && hysteresis_percent < threshold_percent)) {
@@ -51,13 +58,10 @@ FullDetector::FullDetector(double threshold_percent, double hysteresis_percent)
   }
 }
 
-bool FullDetector::update(double percent)
-{
-  if (full_) {
-    full_ = percent >= threshold_percent_ - hysteresis_percent_;
-  } else {
-    full_ = percent >= threshold_percent_;
-  }
+bool FullDetector::update(double fill_level_percent) {
+  const double active_threshold_percent =
+      full_ ? threshold_percent_ - hysteresis_percent_ : threshold_percent_;
+  full_ = fill_level_percent >= active_threshold_percent;
   return full_;
 }
 

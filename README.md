@@ -87,6 +87,17 @@ ros2 launch trashcan_bringup sim.launch.py gui:=false rviz:=true
 | `/bin/full` | `std_msgs/Bool` | Latched; true once the bin reaches 90 percent, until it drops below 85 percent |
 | `/bin/fill_range` | `sensor_msgs/Range` | Distance from the fill-level sensor to the top of the trash |
 
+### Parameters
+
+`fill_level_node` takes these parameters, set for the simulation in `trashcan_bringup/config/fill_level.yaml`:
+
+| Parameter | Default | Meaning |
+| --- | --- | --- |
+| `empty_range_m` | required | Range in metres from the sensor to the bin floor of an empty bin |
+| `full_range_m` | required | Range in metres from the sensor to the trash surface of a 100 percent full bin |
+| `full_threshold_percent` | `90` | Fill percentage at which `/bin/full` turns true |
+| `full_hysteresis_percent` | `5` | Percentage the fill level must drop below the threshold to clear `/bin/full` |
+
 ## Teleoperate
 
 In a second terminal, drive the robot with the keyboard:
@@ -112,7 +123,10 @@ Besides the linters and unit tests, `trashcan_bringup` runs the whole simulation
 It drives the robot forward for 2 simulated seconds and checks that the odometry moved more than 0.3 m, that the LiDAR sees the room walls and not the robot itself, and that the fill-level sensor reads an empty bin and then a filling one once a box is dropped in.
 It uses its own Gazebo partition, so it does not interfere with a simulation you already have running.
 
-GitHub Actions runs the same build and tests on every pull request, on a runner without a GPU, and fails the build on any compiler or build warning.
+C++ code follows the Google C++ style, enforced with the repository's `.clang-format`.
+Format it with `clang-format -i $(git ls-files '*.cpp' '*.hpp')`.
+
+GitHub Actions checks the C++ formatting and runs the same build and tests on every pull request, on a runner without a GPU, and fails the build on any compiler or build warning.
 
 ## License
 
