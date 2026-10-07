@@ -17,6 +17,12 @@ jobs:
     defaults:
       run:
         shell: bash
+    # The runner image puts a newer CMake first on PATH that warns about
+    # ROS's own vendored packages (gtest_vendor). Build with the Ubuntu 24.04
+    # CMake that ROS 2 Jazzy targets, installed by rosdep with ament_cmake.
+    env:
+      CMAKE_COMMAND: /usr/bin/cmake
+      CTEST_COMMAND: /usr/bin/ctest
     steps:
       - uses: actions/checkout@v7
 
