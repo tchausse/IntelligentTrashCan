@@ -87,6 +87,17 @@ ros2 launch trashcan_bringup sim.launch.py gui:=false rviz:=true
 | `/bin/full` | `std_msgs/Bool` | Latched; true once the bin reaches 90 percent, until it drops below 85 percent |
 | `/bin/fill_range` | `sensor_msgs/Range` | Distance from the fill-level sensor to the top of the trash |
 
+### Parameters
+
+`fill_level_node` takes these parameters, set for the simulation in `trashcan_bringup/config/fill_level.yaml`:
+
+| Parameter | Default | Meaning |
+| --- | --- | --- |
+| `empty_range_m` | required | Range in metres from the sensor to the bin floor of an empty bin |
+| `full_range_m` | required | Range in metres from the sensor to the trash surface of a 100 percent full bin |
+| `full_threshold_percent` | `90` | Fill percentage at which `/bin/full` turns true |
+| `full_hysteresis_percent` | `5` | Percentage the fill level must drop below the threshold to clear `/bin/full` |
+
 ## Teleoperate
 
 In a second terminal, drive the robot with the keyboard:

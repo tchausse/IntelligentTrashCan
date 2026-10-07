@@ -19,7 +19,7 @@ void validate(const FillLevelCalibration& calibration) {
   if (!(calibration.full_bin_range_m > 0.0 &&
         calibration.full_bin_range_m < calibration.empty_bin_range_m)) {
     throw std::invalid_argument(
-        "fill level calibration needs 0 < full_range < empty_range");
+        "fill level calibration needs 0 < full_range_m < empty_range_m");
   }
 }
 
