@@ -112,7 +112,10 @@ Besides the linters and unit tests, `trashcan_bringup` runs the whole simulation
 It drives the robot forward for 2 simulated seconds and checks that the odometry moved more than 0.3 m, that the LiDAR sees the room walls and not the robot itself, and that the fill-level sensor reads an empty bin and then a filling one once a box is dropped in.
 It uses its own Gazebo partition, so it does not interfere with a simulation you already have running.
 
-GitHub Actions runs the same build and tests on every pull request, on a runner without a GPU, and fails the build on any compiler or build warning.
+C++ code follows the Google C++ style, enforced with the repository's `.clang-format`.
+Format it with `clang-format -i $(git ls-files '*.cpp' '*.hpp')`.
+
+GitHub Actions checks the C++ formatting and runs the same build and tests on every pull request, on a runner without a GPU, and fails the build on any compiler or build warning.
 
 ## License
 
