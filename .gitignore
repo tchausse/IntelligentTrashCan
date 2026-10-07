@@ -1,0 +1,7 @@
+# colcon workspace outputs
+/build/
+/install/
+/log/
+
+__pycache__/
+*.pyc

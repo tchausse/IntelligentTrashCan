@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<!--
+  The open-top bin and the posts that hold it above the LiDAR.
+
+  The bin has no lid. Its wall is a ring of flat panels rather than a solid
+  cylinder so that both the visual and the collision geometry stay open at the
+  top: trash dropped from above lands on the bin floor.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="bin_post" params="index angle">
+    <link name="bin_post_${index}_link">
+      <visual>
+        <geometry>
+          <cylinder radius="${post_radius}" length="${post_length}"/>
+        </geometry>
+        <material name="steel"/>
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="${post_radius}" length="${post_length}"/>
+        </geometry>
+      </collision>
+      <xacro:solid_cylinder_inertial mass="${post_mass}" radius="${post_radius}"
+                                     length="${post_length}">
+        <origin/>
+      </xacro:solid_cylinder_inertial>
+    </link>
+
+    <joint name="bin_post_${index}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="bin_post_${index}_link"/>
+      <origin xyz="${post_offset * cos(angle)} ${post_offset * sin(angle)}
+                   ${(chassis_top_z + bin_bottom_z) / 2 - wheel_radius}"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:bin_post index="0" angle="${pi / 3}"/>
+  <xacro:bin_post index="1" angle="${pi}"/>
+  <xacro:bin_post index="2" angle="${-pi / 3}"/>
+
+  <!-- bin_link sits at the center of the top face of the bin floor. -->
+  <link name="bin_link">
+    <visual>
+      <origin xyz="0 0 ${-bin_floor_thickness / 2}"/>
+      <geometry>
+        <cylinder radius="${bin_inner_radius}" length="${bin_floor_thickness}"/>
+      </geometry>
+      <material name="bin_green"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${-bin_floor_thickness / 2}"/>
+      <geometry>
+        <cylinder radius="${bin_inner_radius}" length="${bin_floor_thickness}"/>
+      </geometry>
+    </collision>
+    <xacro:solid_cylinder_inertial mass="${bin_floor_mass}" radius="${bin_inner_radius}"
+                                   length="${bin_floor_thickness}">
+      <origin xyz="0 0 ${-bin_floor_thickness / 2}"/>
+    </xacro:solid_cylinder_inertial>
+  </link>
+
+  <joint name="bin_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="bin_link"/>
+    <origin xyz="0 0 ${bin_floor_top_z - wheel_radius}"/>
+  </joint>
+
+  <!-- bin_wall_link sits at the center of the wall ring. -->
+  <xacro:property name="wall_panel_width"
+                  value="${2 * bin_outer_radius * tan(pi / bin_wall_segments)}"/>
+
+  <xacro:macro name="bin_wall_panels" params="index">
+    <xacro:property name="angle" value="${2 * pi * index / bin_wall_segments}"/>
+    <xacro:property name="panel_offset" value="${bin_inner_radius + bin_wall_thickness / 2}"/>
+    <visual>
+      <origin xyz="${panel_offset * cos(angle)} ${panel_offset * sin(angle)} 0"
+              rpy="0 0 ${angle}"/>
+      <geometry>
+        <box size="${bin_wall_thickness} ${wall_panel_width} ${bin_wall_height}"/>
+      </geometry>
+      <material name="bin_green"/>
+    </visual>
+    <collision>
+      <origin xyz="${panel_offset * cos(angle)} ${panel_offset * sin(angle)} 0"
+              rpy="0 0 ${angle}"/>
+      <geometry>
+        <box size="${bin_wall_thickness} ${wall_panel_width} ${bin_wall_height}"/>
+      </geometry>
+    </collision>
+    <xacro:if value="${index + 1 &lt; bin_wall_segments}">
+      <xacro:bin_wall_panels index="${index + 1}"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <link name="bin_wall_link">
+    <xacro:bin_wall_panels index="0"/>
+    <xacro:cylindrical_shell_inertial mass="${bin_wall_mass}"
+                                      radius="${bin_inner_radius + bin_wall_thickness / 2}"
+                                      length="${bin_wall_height}">
+      <origin/>
+    </xacro:cylindrical_shell_inertial>
+  </link>
+
+  <joint name="bin_wall_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="bin_wall_link"/>
+    <origin xyz="0 0 ${bin_bottom_z + bin_wall_height / 2 - wheel_radius}"/>
+  </joint>
+
+</robot>

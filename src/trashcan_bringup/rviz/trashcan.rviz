@@ -1,0 +1,101 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+    Help Height: 0
+    Property Tree Widget:
+      Expanded: ~
+      Splitter Ratio: 0.5
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 0.5
+      Plane Cell Count: 20
+      Reference Frame: odom
+      Color: 160; 160; 164
+      Alpha: 0.4
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Enabled: true
+      Description Source: Topic
+      Description Topic:
+        Value: /robot_description
+        Durability Policy: Transient Local
+      Alpha: 1
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: false
+      Show Names: false
+      Marker Scale: 0.3
+    - Class: rviz_default_plugins/LaserScan
+      Name: LaserScan
+      Enabled: true
+      Topic:
+        Value: /scan
+        Reliability Policy: Best Effort
+      Style: Flat Squares
+      Size (m): 0.03
+      Color Transformer: FlatColor
+      Color: 230; 60; 60
+    - Class: rviz_default_plugins/DepthCloud
+      Name: Camera depth
+      Enabled: true
+      Depth Map Topic: /camera/depth_image
+      Color Image Topic: /camera/image
+      Color Transformer: RGB8
+      Style: Points
+      Size (Pixels): 2
+      Occlusion Compensation:
+        Value: false
+    - Class: rviz_default_plugins/Range
+      Name: Bin fill range
+      Enabled: true
+      Topic:
+        Value: /bin/fill_range
+        Reliability Policy: Best Effort
+      Color: 255; 200; 40
+      Alpha: 0.6
+    - Class: rviz_default_plugins/Image
+      Name: Camera image
+      Enabled: true
+      Topic:
+        Value: /camera/image
+        Reliability Policy: Best Effort
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: odom
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Name: Current View
+      Target Frame: base_footprint
+      Distance: 3.5
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0.3
+      Pitch: 0.6
+      Yaw: 3.6
+      Near Clip Distance: 0.01
+    Saved: ~
+Window Geometry:
+  Width: 1400
+  Height: 900
+  Displays:
+    collapsed: false
+  Views:
+    collapsed: true
