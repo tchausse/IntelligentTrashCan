@@ -49,10 +49,12 @@ jobs:
           fi
 
       # The simulation runs headless; Gazebo renders the sensors on the CPU
-      # because the runner has neither GPU nor display.
+      # because the runner has neither GPU nor display. The tests look up the
+      # workspace's own packages, so the overlay must be sourced as in README.
       - name: Test
         run: |
           source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
           colcon test --event-handlers console_cohesion+
           # Lists every failure and fails the step if there was any.
           colcon test-result --verbose
