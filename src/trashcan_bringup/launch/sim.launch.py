@@ -75,10 +75,7 @@ def generate_launch_description():
         arguments=[
             '-topic', 'robot_description',
             '-name', 'trashcan',
-            '-x', LaunchConfiguration('x'),
-            '-y', LaunchConfiguration('y'),
             '-z', '0.01',
-            '-Y', LaunchConfiguration('yaw'),
         ],
         output='screen',
     )
@@ -145,9 +142,6 @@ def generate_launch_description():
             description='Show the Gazebo GUI; false runs the simulation headless.'),
         DeclareLaunchArgument(
             'rviz', default_value='false', description='Start RViz.'),
-        DeclareLaunchArgument('x', default_value='0.0', description='Spawn x [m].'),
-        DeclareLaunchArgument('y', default_value='0.0', description='Spawn y [m].'),
-        DeclareLaunchArgument('yaw', default_value='0.0', description='Spawn yaw [rad].'),
         OpaqueFunction(function=gazebo),
         robot_state_publisher,
         bridge,

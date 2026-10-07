@@ -22,6 +22,7 @@ import launch_testing.actions
 from nav_msgs.msg import Odometry
 import pytest
 import rclpy
+from rclpy.parameter import Parameter
 from rclpy.qos import qos_profile_sensor_data
 from rosgraph_msgs.msg import Clock
 from sensor_msgs.msg import LaserScan
@@ -59,7 +60,9 @@ class TestSimulation(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         rclpy.init()
-        cls.node = rclpy.create_node('trashcan_sim_test')
+        # Stamp commands with simulation time, like the drive controller's clock.
+        cls.node = rclpy.create_node('trashcan_sim_test', parameter_overrides=[
+            Parameter('use_sim_time', Parameter.Type.BOOL, True)])
         cls.clock = Latest(cls.node, Clock, '/clock')
         cls.odom = Latest(cls.node, Odometry, '/odom')
         cls.scan = Latest(cls.node, LaserScan, '/scan', qos_profile_sensor_data)
@@ -113,6 +116,9 @@ class TestSimulation(unittest.TestCase):
         # The room walls are 2 to 2.5 m away; more than half the beams must hit them.
         walls = [r for r in ranges if math.isfinite(r) and r > 1.0]
         self.assertGreater(len(walls), len(ranges) // 2, 'the LiDAR does not see the walls')
+        # Nothing but the walls is in the room, so no beam may hit the robot itself.
+        near = [r for r in ranges if math.isfinite(r) and r < 1.0]
+        self.assertEqual(near, [], 'the LiDAR sees the robot itself')
 
     def test_3_fill_sensor_reports_empty_then_filling_bin(self):
         self.spin_until(lambda: self.fill_level.msg, STARTUP_TIMEOUT_S, '/bin/fill_level')

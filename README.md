@@ -10,7 +10,8 @@ Navigation, the house world (from [home-robot-common](https://github.com/tchauss
 ## The robot
 
 - **Base**: a round, low differential-drive base, 40 cm across (49 cm at the wheels), with two 17 cm driven wheels and front and rear ball casters.
-  The wheels and 6 cm of ground clearance leave room to climb the 5 cm (2 inch) bathroom step in a later iteration.
+  The wheel size and 6 cm of ground clearance are a starting point for the 5 cm (2 inch) bathroom step.
+  Climbing it will take its own caster and drive work in a later iteration; the current base cannot.
 - **Bin**: an open-top bin of about 33 liters with its rim at 62 cm, at hand height for someone sitting down.
   There is no lid, so nothing has to open.
 - **Sensors**:
@@ -66,7 +67,6 @@ Launch arguments:
 | `gui` | `true` | Show the Gazebo GUI; `false` runs headless |
 | `rviz` | `false` | Also start RViz with the robot, LiDAR, depth cloud and camera image |
 | `world` | `minimal_room.sdf` | Path of the Gazebo world to load |
-| `x`, `y`, `yaw` | `0.0` | Spawn pose |
 
 For example, headless with RViz:
 
@@ -93,10 +93,12 @@ In a second terminal, drive the robot with the keyboard:
 
 ```bash
 source /opt/ros/jazzy/setup.bash
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true
+ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p stamped:=true -p use_sim_time:=true
 ```
 
 `stamped:=true` is needed because the drive controller takes `TwistStamped` commands.
+`use_sim_time:=true` stamps those commands with simulation time, the clock the drive controller uses to stop the robot when commands stop arriving for 0.5 s, for example when teleop is closed.
+Without it the commands carry wall-clock stamps, they never look stale, and the robot keeps driving.
 If `teleop_twist_keyboard` is missing, install it with `sudo apt install ros-jazzy-teleop-twist-keyboard`.
 
 ## Test
