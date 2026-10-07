@@ -1,0 +1,240 @@
+<?xml version="1.0"?>
+<!--
+  Sensors: 360 degree LiDAR, RGB-D camera, IMU and the bin fill-level sensor.
+
+  Each sensor is declared on its own link and publishes Gazebo topics that
+  trashcan_bringup bridges to ROS. gz_frame_id makes every message carry the
+  matching ROS frame.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- LiDAR: lidar_link sits on the beam plane, above the wheels and below the bin. -->
+  <link name="lidar_link">
+    <visual>
+      <origin xyz="0 0 ${chassis_top_z + lidar_height / 2 - lidar_beam_z}"/>
+      <geometry>
+        <cylinder radius="${lidar_radius}" length="${lidar_height}"/>
+      </geometry>
+      <material name="charcoal"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${chassis_top_z + lidar_height / 2 - lidar_beam_z}"/>
+      <geometry>
+        <cylinder radius="${lidar_radius}" length="${lidar_height}"/>
+      </geometry>
+    </collision>
+    <xacro:solid_cylinder_inertial mass="${lidar_mass}" radius="${lidar_radius}"
+                                   length="${lidar_height}">
+      <origin xyz="0 0 ${chassis_top_z + lidar_height / 2 - lidar_beam_z}"/>
+    </xacro:solid_cylinder_inertial>
+  </link>
+
+  <joint name="lidar_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="lidar_link"/>
+    <origin xyz="0 0 ${lidar_beam_z - wheel_radius}"/>
+  </joint>
+
+  <gazebo reference="lidar_link">
+    <sensor name="lidar" type="gpu_lidar">
+      <gz_frame_id>lidar_link</gz_frame_id>
+      <topic>scan</topic>
+      <always_on>true</always_on>
+      <update_rate>10</update_rate>
+      <visualize>false</visualize>
+      <lidar>
+        <scan>
+          <horizontal>
+            <samples>${lidar_samples}</samples>
+            <resolution>1</resolution>
+            <min_angle>${-pi}</min_angle>
+            <max_angle>${pi - 2 * pi / lidar_samples}</max_angle>
+          </horizontal>
+          <vertical>
+            <samples>1</samples>
+            <resolution>1</resolution>
+            <min_angle>0</min_angle>
+            <max_angle>0</max_angle>
+          </vertical>
+        </scan>
+        <range>
+          <min>${lidar_min_range}</min>
+          <max>${lidar_max_range}</max>
+          <resolution>0.01</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.01</stddev>
+        </noise>
+      </lidar>
+    </sensor>
+  </gazebo>
+
+  <!-- RGB-D camera, pitched slightly down to see both the floor ahead and people. -->
+  <link name="camera_link">
+    <visual>
+      <geometry>
+        <box size="${camera_size_x} ${camera_size_y} ${camera_size_z}"/>
+      </geometry>
+      <material name="charcoal"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${camera_size_x} ${camera_size_y} ${camera_size_z}"/>
+      </geometry>
+    </collision>
+    <xacro:box_inertial mass="${camera_mass}" x="${camera_size_x}" y="${camera_size_y}"
+                        z="${camera_size_z}">
+      <origin/>
+    </xacro:box_inertial>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="${bin_outer_radius + camera_size_x / 2} 0 ${camera_z - wheel_radius}"
+            rpy="0 ${camera_pitch} 0"/>
+  </joint>
+
+  <!-- REP 103 optical frame: z forward, x right, y down. -->
+  <link name="camera_optical_frame"/>
+
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/>
+    <child link="camera_optical_frame"/>
+    <origin rpy="${-pi / 2} 0 ${-pi / 2}"/>
+  </joint>
+
+  <gazebo reference="camera_link">
+    <sensor name="camera" type="rgbd_camera">
+      <gz_frame_id>camera_optical_frame</gz_frame_id>
+      <topic>camera</topic>
+      <always_on>true</always_on>
+      <update_rate>15</update_rate>
+      <visualize>false</visualize>
+      <camera>
+        <horizontal_fov>1.518</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>10.0</far>
+        </clip>
+        <depth_camera>
+          <clip>
+            <near>0.2</near>
+            <far>8.0</far>
+          </clip>
+        </depth_camera>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.005</stddev>
+        </noise>
+      </camera>
+    </sensor>
+  </gazebo>
+
+  <!-- IMU at the center of the base. -->
+  <link name="imu_link"/>
+
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+  </joint>
+
+  <xacro:macro name="imu_noise" params="stddev">
+    <noise type="gaussian">
+      <mean>0.0</mean>
+      <stddev>${stddev}</stddev>
+    </noise>
+  </xacro:macro>
+
+  <gazebo reference="imu_link">
+    <sensor name="imu" type="imu">
+      <gz_frame_id>imu_link</gz_frame_id>
+      <topic>imu</topic>
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <imu>
+        <angular_velocity>
+          <x><xacro:imu_noise stddev="0.002"/></x>
+          <y><xacro:imu_noise stddev="0.002"/></y>
+          <z><xacro:imu_noise stddev="0.002"/></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><xacro:imu_noise stddev="0.02"/></x>
+          <y><xacro:imu_noise stddev="0.02"/></y>
+          <z><xacro:imu_noise stddev="0.02"/></z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
+  <!--
+    Fill-level sensor: a narrow time-of-flight range sensor. Its x axis points
+    from under the rim down to the center of the bin floor, so the measured
+    range shrinks as trash piles up. trashcan_sensors turns it into a fill
+    percentage.
+  -->
+  <link name="fill_sensor_link">
+    <visual>
+      <geometry>
+        <box size="${fill_sensor_size} ${fill_sensor_size} ${fill_sensor_size}"/>
+      </geometry>
+      <material name="charcoal"/>
+    </visual>
+    <xacro:box_inertial mass="${fill_sensor_mass}" x="${fill_sensor_size}"
+                        y="${fill_sensor_size}" z="${fill_sensor_size}">
+      <origin/>
+    </xacro:box_inertial>
+  </link>
+
+  <joint name="fill_sensor_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="fill_sensor_link"/>
+    <origin xyz="${fill_sensor_x} 0 ${fill_sensor_z - wheel_radius}"
+            rpy="0 ${fill_sensor_pitch} 0"/>
+  </joint>
+
+  <gazebo reference="fill_sensor_link">
+    <sensor name="fill_sensor" type="gpu_lidar">
+      <gz_frame_id>fill_sensor_link</gz_frame_id>
+      <topic>bin/fill_scan</topic>
+      <always_on>true</always_on>
+      <update_rate>5</update_rate>
+      <visualize>false</visualize>
+      <lidar>
+        <scan>
+          <horizontal>
+            <samples>5</samples>
+            <resolution>1</resolution>
+            <min_angle>-0.05</min_angle>
+            <max_angle>0.05</max_angle>
+          </horizontal>
+          <vertical>
+            <samples>1</samples>
+            <resolution>1</resolution>
+            <min_angle>0</min_angle>
+            <max_angle>0</max_angle>
+          </vertical>
+        </scan>
+        <range>
+          <min>0.03</min>
+          <max>1.0</max>
+          <resolution>0.001</resolution>
+        </range>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.002</stddev>
+        </noise>
+      </lidar>
+    </sensor>
+  </gazebo>
+
+</robot>

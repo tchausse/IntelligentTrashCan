@@ -1,0 +1,12 @@
+# Calibration of the bin fill-level sensor (trashcan_sensors/fill_level_node).
+#
+# The sensor sits 0.37 m above the bin floor and 0.15 m from the bin axis, aimed
+# at the center of the floor (see trashcan_description/urdf/properties.xacro):
+#   empty_range_m = hypot(0.15, 0.37)       = 0.399 m, the bare floor
+#   full_range_m  = 0.05 m, a trash pile about 6.5 cm below the rim
+fill_level:
+  ros__parameters:
+    empty_range_m: 0.399
+    full_range_m: 0.05
+    full_threshold_percent: 90.0
+    full_hysteresis_percent: 5.0

@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and test (ROS 2 Jazzy)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    # The runner image puts a newer CMake first on PATH that warns about
+    # ROS's own vendored packages (gtest_vendor). Build with the Ubuntu 24.04
+    # CMake that ROS 2 Jazzy targets, installed by rosdep with ament_cmake.
+    env:
+      CMAKE_COMMAND: /usr/bin/cmake
+      CTEST_COMMAND: /usr/bin/ctest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Sets up the ROS apt repository, colcon and rosdep. The packages
+      # themselves come from rosdep, so a missing package.xml dependency fails
+      # the build instead of being masked by a preinstalled desktop.
+      - uses: ros-tooling/setup-ros@v0.7
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          rosdep update --rosdistro jazzy
+          rosdep install --from-paths src --ignore-src --rosdistro jazzy -y
+
+      - name: Build
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --event-handlers console_cohesion+ 2>&1 | tee build.log
+          test "${PIPESTATUS[0]}" -eq 0
+          # Any compiler, CMake or setup warning lands on stderr.
+          if grep -q "had stderr output" build.log; then
+            echo "::error::The build produced warnings, see the log above."
+            exit 1
+          fi
+
+      # The simulation runs headless; Gazebo renders the sensors on the CPU
+      # because the runner has neither GPU nor display. The tests look up the
+      # workspace's own packages, so the overlay must be sourced as in README.
+      - name: Test
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          source install/setup.bash
+          colcon test --event-handlers console_cohesion+
+          # Lists every failure and fails the step if there was any.
+          colcon test-result --verbose
+
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-logs
+          path: |
+            log/
+            build/*/test_results/
+            build/*/launch_test/
+          if-no-files-found: ignore

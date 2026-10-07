@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<!--
+  Dimensions and masses of the trash can robot, in meters and kilograms.
+
+  Heights named *_z are measured from the floor. base_link sits on the wheel
+  axle, so a floor height h maps to h - wheel_radius in the base_link frame.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!--
+    Drive wheels: 17 cm diameter, a starting point for the 5 cm (2 inch) step.
+    Climbing it will also need its own caster and drive work.
+  -->
+  <xacro:property name="wheel_radius" value="0.085"/>
+  <xacro:property name="wheel_width" value="0.04"/>
+  <xacro:property name="wheel_separation" value="0.45"/>
+  <xacro:property name="wheel_mass" value="0.5"/>
+
+  <!-- Chassis: a low, wide disc holding batteries, motors and electronics. -->
+  <xacro:property name="chassis_radius" value="0.20"/>
+  <xacro:property name="chassis_bottom_z" value="0.06"/>
+  <xacro:property name="chassis_top_z" value="0.16"/>
+  <xacro:property name="chassis_mass" value="7.0"/>
+
+  <!-- Passive ball casters, front and back. They fit inside the ground clearance. -->
+  <xacro:property name="caster_radius" value="${chassis_bottom_z / 2}"/>
+  <xacro:property name="caster_offset_x" value="0.15"/>
+  <xacro:property name="caster_mass" value="0.1"/>
+
+  <!-- 360 degree LiDAR puck on the chassis deck, under the bin. -->
+  <xacro:property name="lidar_radius" value="0.035"/>
+  <xacro:property name="lidar_height" value="0.045"/>
+  <xacro:property name="lidar_beam_z" value="0.19"/>
+  <xacro:property name="lidar_mass" value="0.17"/>
+  <!-- Beyond the bin posts, so the LiDAR does not see the robot itself. -->
+  <xacro:property name="lidar_min_range" value="0.15"/>
+  <xacro:property name="lidar_max_range" value="12.0"/>
+  <xacro:property name="lidar_samples" value="720"/>
+
+  <!-- Three slim posts lift the bin above the LiDAR; none sits straight ahead. -->
+  <xacro:property name="post_radius" value="0.01"/>
+  <xacro:property name="post_offset" value="0.14"/>
+  <xacro:property name="post_mass" value="0.05"/>
+
+  <!-- Open-top bin: about 33 liters, rim at seated hand height. -->
+  <xacro:property name="bin_bottom_z" value="0.215"/>
+  <xacro:property name="bin_floor_thickness" value="0.01"/>
+  <xacro:property name="bin_inner_radius" value="0.165"/>
+  <xacro:property name="bin_wall_thickness" value="0.008"/>
+  <xacro:property name="bin_wall_height" value="0.40"/>
+  <xacro:property name="bin_wall_segments" value="32"/>
+  <xacro:property name="bin_wall_mass" value="1.0"/>
+  <xacro:property name="bin_floor_mass" value="0.4"/>
+
+  <!-- Forward-facing RGB-D camera on the outside of the bin. -->
+  <xacro:property name="camera_z" value="0.45"/>
+  <xacro:property name="camera_pitch" value="0.17"/>
+  <xacro:property name="camera_size_x" value="0.025"/>
+  <xacro:property name="camera_size_y" value="0.09"/>
+  <xacro:property name="camera_size_z" value="0.025"/>
+  <xacro:property name="camera_mass" value="0.1"/>
+
+  <!--
+    Fill-level sensor: a time-of-flight range sensor on the inside of the back
+    wall, just under the rim, aimed at the center of the bin floor.
+  -->
+  <xacro:property name="fill_sensor_x" value="-0.15"/>
+  <xacro:property name="fill_sensor_z" value="0.595"/>
+  <xacro:property name="fill_sensor_size" value="0.012"/>
+  <xacro:property name="fill_sensor_mass" value="0.005"/>
+
+  <!-- Derived values. -->
+  <xacro:property name="chassis_height" value="${chassis_top_z - chassis_bottom_z}"/>
+  <xacro:property name="bin_outer_radius" value="${bin_inner_radius + bin_wall_thickness}"/>
+  <xacro:property name="bin_floor_top_z" value="${bin_bottom_z + bin_floor_thickness}"/>
+  <xacro:property name="post_length" value="${bin_bottom_z - chassis_top_z}"/>
+  <xacro:property name="fill_sensor_pitch"
+                  value="${atan2(fill_sensor_z - bin_floor_top_z, -fill_sensor_x)}"/>
+
+</robot>
